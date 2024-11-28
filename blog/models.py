@@ -106,7 +106,12 @@ class Post(IsPublishedAbstract, CreatedAtAbstract):
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ['title', 'text', 'pub_date', 'location', 'category', 'image']  # Добавлено поле image
+        fields = ['title', 
+                  'text', 
+                  'pub_date', 
+                  'location', 
+                  'category', 
+                  'image']
         widgets = {
             'text': forms.Textarea(attrs={'rows': 4, 'cols': 40}),
             'pub_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
@@ -114,7 +119,9 @@ class PostForm(forms.ModelForm):
 
 
 class Comment(models.Model):
-    post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, 
+                             related_name='comments', 
+                             on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -124,8 +131,10 @@ class Comment(models.Model):
 
 
 class DeletePostForm(forms.Form):
-    confirm = forms.BooleanField(required=True, label="Я подтверждаю удаление поста")
+    confirm = forms.BooleanField(required=True, 
+                                 label="Я подтверждаю удаление поста")
 
 
 class DeleteCommentForm(forms.Form):
-    confirm = forms.BooleanField(required=True, label="Я подтверждаю удаление комментария")
+    confirm = forms.BooleanField(required=True, 
+                                 label="Я подтверждаю удаление комментария")
