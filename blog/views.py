@@ -8,14 +8,21 @@ from django.db import models
 from django.db.models import Count
 
 from .forms import CommentForm
-from .models import Post, Category, PostForm, Comment, DeletePostForm, DeleteCommentForm
+from .models import (Post,
+                     Category,
+                     PostForm,
+                     Comment,
+                     DeletePostForm,
+                     DeleteCommentForm)
 from .constants import PAGINATE_BY
 
 
 def filter_published_posts(posts, user=None):
     if user and user.is_authenticated:
         return posts.select_related('author', 'location', 'category').filter(
-            models.Q(is_published=True, category__is_published=True, pub_date__lte=timezone.now()) |
+            models.Q(is_published=True,
+                     category__is_published=True,
+                     pub_date__lte=timezone.now()) |
             models.Q(author=user)
         )
     return posts.select_related('author', 'location', 'category').filter(
@@ -26,9 +33,7 @@ def filter_published_posts(posts, user=None):
 
 
 def index(request):
-    """
-    Главная страница.
-    """
+    """ Главная страница. """
     posts = Post.objects.filter(
         is_published=True,
         pub_date__lte=timezone.now(),
@@ -44,9 +49,7 @@ def index(request):
 
 
 def post_detail(request, id):
-    """
-    Страница просмотра поста.
-    """
+    """ Страница просмотра поста. """
     post = get_object_or_404(
         filter_published_posts(Post.objects, user=request.user),
         id=id
@@ -62,10 +65,10 @@ def post_detail(request, id):
 
 
 def category_posts(request, category_slug):
-    """
-    Страница категории. Показывает список постов, принадлежащих категории.
-    """
-    category = get_object_or_404(Category, slug=category_slug, is_published=True)
+    """ Страница категории. Показывает список постов, принадлежащих категории. """
+    category = get_object_or_404(Category,
+                                 slug=category_slug,
+                                 is_published=True)
     post_list = filter_published_posts(category.posts.all())
     paginator = Paginator(post_list, PAGINATE_BY)
     page_number = request.GET.get('page')
@@ -77,9 +80,7 @@ def category_posts(request, category_slug):
 
 @login_required
 def create_post(request):
-    """
-    Страница для создания нового поста.
-    """
+    """ Страница для создания нового поста. """
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
         if form.is_valid():
@@ -94,9 +95,7 @@ def create_post(request):
 
 @login_required
 def edit_post(request, id):
-    """
-    Страница для редактирования поста.
-    """
+    """ Страница для редактирования поста. """
     post = get_object_or_404(Post, id=id)
     if post.author != request.user:
         return redirect('blog:post_detail', id=post.id)
@@ -113,9 +112,7 @@ def edit_post(request, id):
 
 
 def profile(request, username):
-    """
-    Страница профиля пользователя.
-    """
+    """ Страница профиля пользователя. """
     profile = get_object_or_404(User, username=username)
 
     if request.user == profile:
@@ -123,7 +120,8 @@ def profile(request, username):
     else:
         post_list = filter_published_posts(profile.posts.all())
 
-    post_list = post_list.annotate(comment_count=Count('comments')).order_by('-pub_date')
+    post_list = (post_list.annotate(comment_count=Count('comments'))
+                 .order_by('-pub_date'))
 
     paginator = Paginator(post_list, PAGINATE_BY)
     page_number = request.GET.get('page')
@@ -134,9 +132,7 @@ def profile(request, username):
 
 
 def registration(request):
-    """
-    Страница регистрации нового пользователя.
-    """
+    """ Страница регистрации нового пользователя. """
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
@@ -150,9 +146,7 @@ def registration(request):
 
 @login_required
 def add_comment(request, post_id):
-    """
-    Добавление комментария к посту.
-    """
+    """ Добавление комментария к посту. """
     post = get_object_or_404(Post, id=post_id)
     if request.method == 'POST':
         form = CommentForm(request.POST)
@@ -191,9 +185,7 @@ def edit_comment(request, post_id, comment_id):
 
 @login_required
 def edit_profile(request):
-    """
-    Редактирование профиля пользователя.
-    """
+    """ Редактирование профиля пользователя. """
     if request.method == 'POST':
         form = UserChangeForm(request.POST, instance=request.user)
         if form.is_valid():
@@ -219,14 +211,11 @@ def delete_post(request, id):
 
 @login_required
 def delete_comment(request, post_id, comment_id):
-    """
-    Удаление комментария.
-    """
+    """ Удаление комментария. """
     comment = get_object_or_404(Comment, id=comment_id, author=request.user)
     if request.method == 'POST':
         comment.delete()
         return redirect('blog:post_detail', id=post_id)
-    form = DeleteCommentForm()
     return render(request, 'blog/comment.html',
                   {'comment': comment})
 
