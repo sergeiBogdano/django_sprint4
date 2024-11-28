@@ -87,7 +87,7 @@ class Post(IsPublishedAbstract, CreatedAtAbstract):
                                  null=True,
                                  verbose_name='Категория',
                                  related_name='posts')
-    image = models.ImageField(  # Добавлено поле
+    image = models.ImageField(
         upload_to='posts/',
         verbose_name='Изображение',
         null=True,
@@ -106,11 +106,11 @@ class Post(IsPublishedAbstract, CreatedAtAbstract):
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ['title', 
-                  'text', 
-                  'pub_date', 
-                  'location', 
-                  'category', 
+        fields = ['title',
+                  'text',
+                  'pub_date',
+                  'location',
+                  'category',
                   'image']
         widgets = {
             'text': forms.Textarea(attrs={'rows': 4, 'cols': 40}),
@@ -119,8 +119,8 @@ class PostForm(forms.ModelForm):
 
 
 class Comment(models.Model):
-    post = models.ForeignKey(Post, 
-                             related_name='comments', 
+    post = models.ForeignKey(Post,
+                             related_name='comments',
                              on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField()
@@ -131,10 +131,10 @@ class Comment(models.Model):
 
 
 class DeletePostForm(forms.Form):
-    confirm = forms.BooleanField(required=True, 
+    confirm = forms.BooleanField(required=True,
                                  label="Я подтверждаю удаление поста")
 
 
 class DeleteCommentForm(forms.Form):
-    confirm = forms.BooleanField(required=True, 
+    confirm = forms.BooleanField(required=True,
                                  label="Я подтверждаю удаление комментария")
