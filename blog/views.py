@@ -21,8 +21,7 @@ def filter_published_posts(posts, user=None):
         return posts.select_related('author', 'location', 'category').filter(
             models.Q(is_published=True,
                      category__is_published=True,
-                     pub_date__lte=timezone.now()) |
-            models.Q(author=user)
+                     pub_date__lte=timezone.now()) | models.Q(author=user)
         )
     return posts.select_related('author', 'location', 'category').filter(
         is_published=True,
