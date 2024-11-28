@@ -13,17 +13,12 @@ from .constants import PAGINATE_BY
 
 
 def filter_published_posts(posts, user=None):
-    """Filter published posts based on user authentication."""
     if user and user.is_authenticated:
-        return posts.select_related(
-            'author', 'location', 'category'
-        ).filter(
+        return posts.select_related('author', 'location', 'category').filter(
             models.Q(is_published=True, category__is_published=True, pub_date__lte=timezone.now()) |
             models.Q(author=user)
         )
-    return posts.select_related(
-        'author', 'location', 'category'
-    ).filter(
+    return posts.select_related('author', 'location', 'category').filter(
         is_published=True,
         category__is_published=True,
         pub_date__lte=timezone.now()
@@ -31,7 +26,9 @@ def filter_published_posts(posts, user=None):
 
 
 def index(request):
-    """Main page displaying posts."""
+    """
+    Главная страница.
+    """
     posts = Post.objects.filter(
         is_published=True,
         pub_date__lte=timezone.now(),
@@ -47,10 +44,14 @@ def index(request):
 
 
 def post_detail(request, id):
-    """View a single post."""
+    """
+    Страница просмотра поста.
+    """
     post = get_object_or_404(
-        filter_published_posts(Post.objects, user=request.user), id=id
+        filter_published_posts(Post.objects, user=request.user),
+        id=id
     )
+
     comments = post.comments.all()
 
     return render(request, 'blog/detail.html', {
@@ -61,21 +62,24 @@ def post_detail(request, id):
 
 
 def category_posts(request, category_slug):
-    """Display posts in a specific category."""
+    """
+    Страница категории. Показывает список постов, принадлежащих категории.
+    """
     category = get_object_or_404(Category, slug=category_slug, is_published=True)
     post_list = filter_published_posts(category.posts.all())
     paginator = Paginator(post_list, PAGINATE_BY)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'blog/category.html', {
-        'category': category, 'page_obj': page_obj
-    })
+    return render(request, 'blog/category.html',
+                  {'category': category, 'page_obj': page_obj})
 
 
 @login_required
 def create_post(request):
-    """Create a new post."""
+    """
+    Страница для создания нового поста.
+    """
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
         if form.is_valid():
@@ -90,7 +94,9 @@ def create_post(request):
 
 @login_required
 def edit_post(request, id):
-    """Edit an existing post."""
+    """
+    Страница для редактирования поста.
+    """
     post = get_object_or_404(Post, id=id)
     if post.author != request.user:
         return redirect('blog:post_detail', id=post.id)
@@ -102,13 +108,14 @@ def edit_post(request, id):
             return redirect('blog:post_detail', id=post.id)
     else:
         form = PostForm(instance=post)
-    return render(request, 'blog/create.html', {
-        'form': form, 'is_edit': True
-    })
+    return render(request, 'blog/create.html',
+                  {'form': form, 'is_edit': True})
 
 
 def profile(request, username):
-    """User profile page showing user posts."""
+    """
+    Страница профиля пользователя.
+    """
     profile = get_object_or_404(User, username=username)
 
     if request.user == profile:
@@ -122,13 +129,14 @@ def profile(request, username):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'blog/profile.html', {
-        'profile': profile, 'page_obj': page_obj
-    })
+    return render(request, 'blog/profile.html',
+                  {'profile': profile, 'page_obj': page_obj})
 
 
 def registration(request):
-    """Register a new user."""
+    """
+    Страница регистрации нового пользователя.
+    """
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
@@ -136,14 +144,15 @@ def registration(request):
             return redirect('blog:index')
     else:
         form = UserCreationForm()
-    return render(request, 'registration/registration_form.html', {
-        'form': form
-    })
+    return render(request, 'registration/registration_form.html',
+                  {'form': form})
 
 
 @login_required
 def add_comment(request, post_id):
-    """Add a comment to a post."""
+    """
+    Добавление комментария к посту.
+    """
     post = get_object_or_404(Post, id=post_id)
     if request.method == 'POST':
         form = CommentForm(request.POST)
@@ -155,14 +164,13 @@ def add_comment(request, post_id):
             return redirect('blog:post_detail', id=post_id)
     else:
         form = CommentForm()
-    return render(request, 'blog/comment.html', {
-        'post': post, 'form': form
-    })
+    return render(request, 'blog/comment.html',
+                  {'post': post, 'form': form})
 
 
 @login_required
 def edit_comment(request, post_id, comment_id):
-    """Edit a comment."""
+    """Редактирование комментария."""
     comment = get_object_or_404(Comment, id=comment_id, author=request.user)
     post = get_object_or_404(Post, id=post_id)
     if request.method == 'POST':
@@ -175,13 +183,17 @@ def edit_comment(request, post_id, comment_id):
     return render(request, 'blog/comment.html', {
         'post': post,
         'form': form,
-        'comment': comment
+        'comment': comment,
+        'post_id': post_id,
+        'comment_id': comment_id
     })
 
 
 @login_required
 def edit_profile(request):
-    """Edit user profile."""
+    """
+    Редактирование профиля пользователя.
+    """
     if request.method == 'POST':
         form = UserChangeForm(request.POST, instance=request.user)
         if form.is_valid():
@@ -195,32 +207,32 @@ def edit_profile(request):
 
 @login_required
 def delete_post(request, id):
-    """Delete a post."""
+    """Удаление поста."""
     post = get_object_or_404(Post, id=id, author=request.user)
     if request.method == 'POST':
         post.delete()
         return redirect('blog:profile', username=request.user.username)
-    form = DeletePostForm()
-    return render(request, 'blog/detail.html', {
-        'post': post, 'form': form
-    })
+    form = DeletePostForm(request.POST)
+    return render(request, 'blog/detail.html',
+                  {'post': post, 'form': form})
 
 
 @login_required
 def delete_comment(request, post_id, comment_id):
-    """Delete a comment."""
+    """
+    Удаление комментария.
+    """
     comment = get_object_or_404(Comment, id=comment_id, author=request.user)
     if request.method == 'POST':
         comment.delete()
         return redirect('blog:post_detail', id=post_id)
     form = DeleteCommentForm()
-    return render(request, 'blog/comment.html', {
-        'comment': comment, 'form': form
-    })
+    return render(request, 'blog/comment.html',
+                  {'comment': comment})
 
 
 @login_required
 def user_posts_view(request):
-    """View user's posts."""
     posts = Post.objects.filter(author=request.user)
-    return render(request, 'blog/user.html', {'posts': posts})
+    return render(request, 'blog/user.html',
+                  {'posts': posts})
