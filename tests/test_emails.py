@@ -12,6 +12,7 @@ def test_gitignore():
         ) as fh:
             gitignore = fh.read()
     except Exception as e:
+        breakpoint()
         raise AssertionError(
             "При чтении файла `.gitignore` в корне проекта возникла ошибка:\n"
             f"{type(e).__name__}: {e}"
