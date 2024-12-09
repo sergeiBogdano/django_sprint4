@@ -1,19 +1,32 @@
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import get_user_model
 from django import forms
-from .models import Comment
+from django.contrib.auth.forms import UserCreationForm
+
+from .models import Comment, Post, User
 
 
-User = get_user_model()
-
-
-class CustomUserCreationForm(UserCreationForm):
+class UserRegistrationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ('username', )
+        fields = ('username',)
 
 
 class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
-        fields = ['text']
+        fields = ('text',)
+
+
+class PostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        exclude = ('author',)
+
+
+class DeletePostForm(forms.Form):
+    confirm = forms.BooleanField(required=True,
+                                 label='Я подтверждаю удаление поста')
+
+
+class DeleteCommentForm(forms.Form):
+    confirm = forms.BooleanField(required=True,
+                                 label='Я подтверждаю удаление комментария')

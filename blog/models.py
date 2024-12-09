@@ -1,23 +1,16 @@
-from django.db import models
 from django.contrib.auth import get_user_model
-from django import forms
+from django.db import models
 
 from .constants import MAX_FIELD_LENGTH, MAX_SHORT_STRING_LENGTH
 
 User = get_user_model()
 
 
-class IsPublishedAbstract(models.Model):
+class BaseModel(models.Model):
     is_published = models.BooleanField(
         default=True, verbose_name='Опубликовано',
         help_text='Снимите галочку, чтобы скрыть публикацию.'
     )
-
-    class Meta:
-        abstract = True
-
-
-class CreatedAtAbstract(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Добавлено'
@@ -27,7 +20,7 @@ class CreatedAtAbstract(models.Model):
         abstract = True
 
 
-class Category(IsPublishedAbstract, CreatedAtAbstract):
+class Category(BaseModel):
     title = models.CharField(
         max_length=MAX_FIELD_LENGTH,
         verbose_name='Заголовок'
@@ -43,12 +36,13 @@ class Category(IsPublishedAbstract, CreatedAtAbstract):
     class Meta:
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
+        ordering = ['title']
 
     def __str__(self):
         return self.title[:MAX_SHORT_STRING_LENGTH]
 
 
-class Location(IsPublishedAbstract, CreatedAtAbstract):
+class Location(BaseModel):
     name = models.CharField(
         max_length=MAX_FIELD_LENGTH,
         verbose_name='Название места'
@@ -62,7 +56,7 @@ class Location(IsPublishedAbstract, CreatedAtAbstract):
         return self.name[:MAX_SHORT_STRING_LENGTH]
 
 
-class Post(IsPublishedAbstract, CreatedAtAbstract):
+class Post(BaseModel):
     title = models.CharField(
         max_length=MAX_FIELD_LENGTH,
         verbose_name='Заголовок'
@@ -103,38 +97,28 @@ class Post(IsPublishedAbstract, CreatedAtAbstract):
         return self.title[:MAX_SHORT_STRING_LENGTH]
 
 
-class PostForm(forms.ModelForm):
-    class Meta:
-        model = Post
-        fields = ['title',
-                  'text',
-                  'pub_date',
-                  'location',
-                  'category',
-                  'image']
-        widgets = {
-            'text': forms.Textarea(attrs={'rows': 4, 'cols': 40}),
-            'pub_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-        }
-
-
 class Comment(models.Model):
-    post = models.ForeignKey(Post,
-                             related_name='comments',
-                             on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    text = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    post = models.ForeignKey(
+        'Post',
+        related_name='comments',
+        on_delete=models.CASCADE,
+        verbose_name='Публикация'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор'
+    )
+    text = models.TextField(verbose_name='Текст комментария')
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата добавления'
+    )
+
+    class Meta:
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'Комментарии'
+        ordering = ['created_at']
 
     def __str__(self):
-        return self.text
-
-
-class DeletePostForm(forms.Form):
-    confirm = forms.BooleanField(required=True,
-                                 label="Я подтверждаю удаление поста")
-
-
-class DeleteCommentForm(forms.Form):
-    confirm = forms.BooleanField(required=True,
-                                 label="Я подтверждаю удаление комментария")
+        return self.text[:MAX_SHORT_STRING_LENGTH]
