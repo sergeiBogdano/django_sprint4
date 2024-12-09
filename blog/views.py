@@ -18,7 +18,9 @@ def paginate_queryset(request, queryset, paginate_by):
 
 
 def annotate_and_order_posts(posts):
-    return posts.annotate(comment_count=Count('comments')).order_by('-pub_date')
+    return posts.annotate(
+        comment_count=Count('comments')
+    ).order_by('-pub_date')
 
 
 def filter_published_posts(posts,
@@ -52,7 +54,8 @@ def index(request):
 def post_detail(request, post_id):
     post = get_object_or_404(Post.objects.select_related('author',
                                                          'location',
-                                                         'category'), id=post_id)
+                                                         'category'),
+                             id=post_id)
 
     if not post.is_published and post.author != request.user:
         return render(request, 'pages/404.html', status=404)
