@@ -56,11 +56,12 @@ def post_detail(request, post_id):
         process_posts(posts=Post.objects.filter(id=post_id),
                       apply_filter=False)
     )
-    if (
-        not (post.is_published and
-             post.category.is_published and post.pub_date<= timezone.now())
-        and post.author != request.user
-    ):
+    is_post_published = (
+        post.is_published and
+        post.category.is_published and
+        post.pub_date <= timezone.now()
+    )
+    if not is_post_published and post.author != request.user:
         return render(request, 'pages/404.html', status=404)
     comments = post.comments.all()
     return render(request, 'blog/detail.html', {
