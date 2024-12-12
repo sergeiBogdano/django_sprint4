@@ -53,23 +53,12 @@ def index(request):
     )
 
 
-@login_required
 def post_detail(request, post_id):
-    if request.user.is_authenticated and Post.objects.filter(
-            id=post_id,
-            author=request.user
-    ).exists():
+    post = get_object_or_404(Post, id=post_id)
+    if post.author == request.user:
         post = get_object_or_404(Post, id=post_id)
     else:
-        post = get_object_or_404(
-            Post.objects.filter(
-                is_published=True,
-                pub_date__lte=timezone.now(),
-                category__is_published=True
-            ),
-            id=post_id
-        )
-
+        post = get_object_or_404(process_posts(apply_filter=True), id=post_id)
     return render(request, 'blog/detail.html', {
         'post': post,
         'form': CommentForm(),
@@ -121,20 +110,10 @@ def edit_post(request, post_id):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    if request.user == author:
-        posts = process_posts(author.posts.all(), apply_filter=False)
-    else:
-        posts = process_posts(
-            author.posts.filter(
-                is_published=True,
-                category__is_published=True,
-                pub_date__lte=timezone.now()
-            ),
-            apply_filter=True
-        )
+    page_obj = get_page(request, process_posts(author.posts.all(), apply_filter=False))
     return render(request, 'blog/profile.html', {
         'profile': author,
-        'page_obj': get_page(request, posts)
+        'page_obj': page_obj
     })
 
 
