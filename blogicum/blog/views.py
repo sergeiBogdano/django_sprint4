@@ -60,7 +60,8 @@ def post_detail(request, post_id):
         not (
             post.is_published and post.category.is_published and post.pub_date
             <= timezone.now()
-            ) and post.author != request.user
+            )
+        and post.author != request.user
     ):
         return render(request, 'pages/404.html', status=404)
     comments = post.comments.all()
