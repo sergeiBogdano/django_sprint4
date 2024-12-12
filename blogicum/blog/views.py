@@ -57,9 +57,9 @@ def post_detail(request, post_id):
                       apply_filter=False)
     )
     is_post_published = (
-        post.is_published and
-        post.category.is_published and
-        post.pub_date <= timezone.now()
+        post.is_published
+        and post.category.is_published
+        and post.pub_date <= timezone.now()
     )
     if not is_post_published and post.author != request.user:
         return render(request, 'pages/404.html', status=404)
