@@ -58,10 +58,9 @@ def post_detail(request, post_id):
     )
     if (
         not (
-            post.is_published and
-            post.category.is_published and
-            post.pub_date <= timezone.now()
-        ) and post.author != request.user
+            post.is_published and post.category.is_published and post.pub_date
+            <= timezone.now()
+            ) and post.author != request.user
     ):
         return render(request, 'pages/404.html', status=404)
     comments = post.comments.all()
@@ -70,7 +69,6 @@ def post_detail(request, post_id):
         'form': CommentForm(),
         'comments': comments,
     })
-
 
 
 def category_posts(request, category_slug):
