@@ -33,15 +33,18 @@ def process_posts(
             pub_date__lte=timezone.now()
         )
     if annotate:
-        posts = (posts.annotate(comment_count=Count('comments'))
-                 .order_by(*Post._meta.ordering))
+        posts = posts.annotate(
+            comment_count=Count('comments')
+        ).order_by(
+            *Post._meta.ordering
+        )
     return posts
 
 
 def index(request):
     page_obj = get_page(
         request,
-        process_posts(posts=Post.objects.all())
+        process_posts(Post.objects.all())
     )
     return render(
         request,
@@ -52,22 +55,25 @@ def index(request):
 
 @login_required
 def post_detail(request, post_id):
-    post = get_object_or_404(
-        process_posts(posts=Post.objects.filter(id=post_id),
-                      apply_filter=False)
-    )
-    is_post_published = (
-        post.is_published
-        and post.category.is_published
-        and post.pub_date <= timezone.now()
-    )
-    if not is_post_published and post.author != request.user:
-        return render(request, 'pages/404.html', status=404)
-    comments = post.comments.all()
+    if request.user.is_authenticated and Post.objects.filter(
+            id=post_id,
+            author=request.user
+    ).exists():
+        post = get_object_or_404(Post, id=post_id)
+    else:
+        post = get_object_or_404(
+            Post.objects.filter(
+                is_published=True,
+                pub_date__lte=timezone.now(),
+                category__is_published=True
+            ),
+            id=post_id
+        )
+
     return render(request, 'blog/detail.html', {
         'post': post,
         'form': CommentForm(),
-        'comments': comments,
+        'comments': post.comments.all(),
     })
 
 
@@ -116,16 +122,19 @@ def edit_post(request, post_id):
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     if request.user == author:
-        posts = author.posts.all()
+        posts = process_posts(author.posts.all(), apply_filter=False)
     else:
-        posts = author.posts.filter(
-            is_published=True,
-            category__is_published=True,
-            pub_date__lte=timezone.now()
+        posts = process_posts(
+            author.posts.filter(
+                is_published=True,
+                category__is_published=True,
+                pub_date__lte=timezone.now()
+            ),
+            apply_filter=True
         )
     return render(request, 'blog/profile.html', {
         'profile': author,
-        'page_obj': get_page(request, process_posts(posts, apply_filter=False))
+        'page_obj': get_page(request, posts)
     })
 
 
