@@ -58,7 +58,8 @@ def post_detail(request, post_id):
     if post.author == request.user:
         post = get_object_or_404(Post, id=post_id)
     else:
-        post = get_object_or_404(process_posts(apply_filter=True), id=post_id)
+        post = get_object_or_404(process_posts(apply_filter=True),
+                                 id=post_id)
     return render(request, 'blog/detail.html', {
         'post': post,
         'form': CommentForm(),
@@ -110,7 +111,8 @@ def edit_post(request, post_id):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    page_obj = get_page(request, process_posts(author.posts.all(), apply_filter=False))
+    page_obj = get_page(request, process_posts(author.posts.all(),
+                                               apply_filter=False))
     return render(request, 'blog/profile.html', {
         'profile': author,
         'page_obj': page_obj
