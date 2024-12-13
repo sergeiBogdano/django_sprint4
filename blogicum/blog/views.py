@@ -55,11 +55,15 @@ def index(request):
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    if post.author == request.user:
-        post = get_object_or_404(Post, id=post_id)
-    else:
-        post = get_object_or_404(process_posts(apply_filter=True),
-                                 id=post_id)
+    if post.author != request.user:
+        post = get_object_or_404(
+            process_posts(
+                apply_filter=True,
+                use_select_related=False,
+                annotate=False
+            ),
+            id=post_id
+        )
     return render(request, 'blog/detail.html', {
         'post': post,
         'form': CommentForm(),
@@ -111,11 +115,14 @@ def edit_post(request, post_id):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    page_obj = get_page(request, process_posts(author.posts.all(),
-                                               apply_filter=False))
+    is_author = (author == request.user)
+    posts = process_posts(
+        author.posts.all(),
+        apply_filter=not is_author
+    )
     return render(request, 'blog/profile.html', {
         'profile': author,
-        'page_obj': page_obj
+        'page_obj': get_page(request, posts)
     })
 
 
